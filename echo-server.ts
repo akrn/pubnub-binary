@@ -22,15 +22,11 @@ setTimeout(() => {
 
         message.msgType = 'pong';
         pubsub_send.publish(message)
-            .then((m) => {
-                if (m[0] !== 1 || m[1] !== 'Sent') {
-                    console.error('Echo+MSG Unexpected answer',m, message);
-                } else {
+            .then(() => {
                     console.info(util.format('%s Echo+MSG: %s send #%s',
                         (new Date()).toISOString(), message.uuid, message._msgId));
-                }
             })
             .catch((e) => console.log('Echo+Error sending message: ', e));
 
-    });
+    }).catch((e) => console.log('Echo+Error subscribing'));
 }, 1000);

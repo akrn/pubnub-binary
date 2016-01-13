@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/akrn/pubnub-binary#readme",
   "dependencies": {
-    "pubnub": "^3.7.18"
+    "pubnub": "^3.7.18",
+    "pusher": "^1.1.0"
   }
 }
