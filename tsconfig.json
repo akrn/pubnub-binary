@@ -5,6 +5,7 @@
         "target": "es6"
     },
     "files": [
-        "index.ts"
+        "client.ts",
+        "echo-server.ts"
     ]
 }

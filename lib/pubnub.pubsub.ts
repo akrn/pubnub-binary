@@ -7,15 +7,19 @@ type SubscribeCallback = (message: Object) => void;
 
 export class PubNubPubSub implements IPubSub {
     channel: string;
-    pubnub: any;
+    static pubnub: any;
     log: any;
+
+
 
     constructor(log: any, channel: string, settings: any) {
         this.channel = channel;
-        this.pubnub = PubNub(settings);
+        if (!PubNubPubSub.pubnub) {
+            PubNubPubSub.pubnub = PubNub(settings);
+        }
         this.log = log;
 
-        this.pubnub.time(
+        PubNubPubSub.pubnub.time(
             function(time) {
                 log.info('Confirm PubNub connection', time);
             }
@@ -24,12 +28,12 @@ export class PubNubPubSub implements IPubSub {
 
     async publish(message: any): Promise<void> {
         return new Promise<void>((resolve, reject) => {
-            this.pubnub.publish({
+            PubNubPubSub.pubnub.publish({
                 channel: this.channel,
                 message: message,
                 callback: (m) => {
-                    this.log.info('PubNub published');
-                    resolve();
+                    //this.log.info('PubNub published');
+                    resolve(m);
                 },
                 error: (m) => {
                     this.log.error('PubNub publish Error');
@@ -41,7 +45,7 @@ export class PubNubPubSub implements IPubSub {
 
     subscribe(callback: SubscribeCallback): Promise<void> {
         return new Promise<void>((resolve, reject) => {
-            this.pubnub.subscribe({
+            PubNubPubSub.pubnub.subscribe({
                 channel: this.channel,
                 message: (message, env, channel) => {
                     // this.log.info('PubNub received', {message: message});
@@ -66,7 +70,7 @@ export class PubNubPubSub implements IPubSub {
 
     unsubscribe() {
         this.log.info('PubNub unsubscribe'),
-        this.pubnub.unsubscribe({
+            PubNubPubSub.pubnub.unsubscribe({
             channel : this.channel,
         });
     }
