@@ -3,25 +3,22 @@
 var ipubsub_1 = require('./lib/ipubsub');
 var binary_pubsub_1 = require('./lib/binary.pubsub');
 var fs = require('fs');
-let pubSubSetup = {
-    pubsub: 'pubnub',
-    pubnub: {
-        publish_key: 'pub-c-c24684b2-f532-4925-8666-56e6f5255795',
-        subscribe_key: 'sub-c-3996d2a2-a8e9-11e5-a64b-0619f8945a4f'
-    }
-};
 // Create IPubSub object and wrap it with BinaryPubSub wrapper
-let pubsub = ipubsub_1.createPubSub(pubSubSetup, console, 'test123');
-pubsub = new binary_pubsub_1.BinaryPubSub(pubsub, binary_pubsub_1.BinaryPubSubMode.Object);
+var pubSubSetup = require('./config').pubSubSetup;
+// Create IPubSub object and wrap it with BinaryPubSub wrapper
+let pubsub_recv = ipubsub_1.createPubSub(pubSubSetup, console, pubSubSetup.room_send);
+let pubsub_recv_binary = new binary_pubsub_1.BinaryPubSub(pubsub_recv, binary_pubsub_1.BinaryPubSubMode.Object);
+let pubsub_send = ipubsub_1.createPubSub(pubSubSetup, console, pubSubSetup.room_recv);
+let pubsub_send_binary = new binary_pubsub_1.BinaryPubSub(pubsub_send, binary_pubsub_1.BinaryPubSubMode.Object);
 setTimeout(() => {
     // Awaiting connection
     // Subscribing
-    pubsub.subscribe((message) => {
+    pubsub_recv_binary.subscribe((message) => {
         // Message will be a buffer if BinaryPubSubMode is set to Buffer
         fs.writeFileSync('./received_file', new Buffer(message.file, 'base64'));
         console.log('+MSG: Saved to ./received_file');
         // Unsubscribe
-        pubsub.unsubscribe();
+        pubsub_recv_binary.unsubscribe();
     });
     // Sending a message after a small timeout
     setTimeout(() => {
@@ -35,7 +32,7 @@ setTimeout(() => {
             key: 'value',
             file: buffer.toString('base64')
         };
-        pubsub.publish(message)
+        pubsub_send_binary.publish(message)
             .then(() => console.log('Message sent'))
             .catch((e) => console.log('Error sending message: ', e));
     }, 1000);

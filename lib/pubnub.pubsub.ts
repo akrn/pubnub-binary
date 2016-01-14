@@ -1,30 +1,33 @@
 'use strict';
 
-import {IPubSub} from "./ipubsub";
+import {IPubSubTransport} from "./ipubsub";
 var PubNub = require("pubnub");
 
 type SubscribeCallback = (message: Object) => void;
 
-export class PubNubPubSub implements IPubSub {
+export class PubNubPubSub implements IPubSubTransport {
     channel: string;
-    pubnub: any;
+    static pubnub: any;
     log: any;
 
     constructor(log: any, channel: string, settings: any) {
         this.channel = channel;
-        this.pubnub = PubNub(settings);
+        if (!PubNubPubSub.pubnub) {
+            PubNubPubSub.pubnub = PubNub(settings);
+        }
+
         this.log = log;
 
-        this.pubnub.time(
+        PubNubPubSub.pubnub.time(
             function(time) {
                 log.info('Confirm PubNub connection', time);
             }
         );
    }
 
-    async publish(message: any): Promise<void> {
+    async publish(message: any): Promise<any> {
         return new Promise<void>((resolve, reject) => {
-            this.pubnub.publish({
+            PubNubPubSub.pubnub.publish({
                 channel: this.channel,
                 message: message,
                 callback: (m) => {
@@ -39,9 +42,9 @@ export class PubNubPubSub implements IPubSub {
         });
     }
 
-    subscribe(callback: SubscribeCallback): Promise<void> {
+    async subscribe(callback: SubscribeCallback): Promise<any> {
         return new Promise<void>((resolve, reject) => {
-            this.pubnub.subscribe({
+            PubNubPubSub.pubnub.subscribe({
                 channel: this.channel,
                 message: (message, env, channel) => {
                     // this.log.info('PubNub received', {message: message});
@@ -66,8 +69,17 @@ export class PubNubPubSub implements IPubSub {
 
     unsubscribe() {
         this.log.info('PubNub unsubscribe'),
-        this.pubnub.unsubscribe({
+        PubNubPubSub.pubnub.unsubscribe({
             channel : this.channel,
         });
+    }
+
+    getChunkLimit(): number {
+        return 32000;
+    }
+
+    getChunkSize(chunk: any): number {
+        // https://www.pubnub.com/community/discussion/21/calculating-a-pubnub-message-payload-size
+        return encodeURIComponent(this.channel + JSON.stringify(chunk)).length + 100;
     }
 }

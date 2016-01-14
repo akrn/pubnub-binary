@@ -1,11 +1,8 @@
 'use strict';
 
 export type SubscribeCallback = (message: any) => void;
-import {IPubSub} from "./ipubsub";
+import {IPubSub, IPubSubTransport} from "./ipubsub";
 import zlib = require('zlib');
-
-const CHUNK_DATA_LIMIT = 32000;
-const CHUNK_LIMIT = 32000;
 
 export interface IBinaryPubSub extends IPubSub { };
 
@@ -20,19 +17,19 @@ export enum BinaryPubSubMode {
 }
 
 export class BinaryPubSub implements IBinaryPubSub {
-    pubsub: IPubSub;
+    pubsub: IPubSubTransport;
     channel: string;
 
     mode: BinaryPubSubMode;
     incomingBinaries: any;
 
-    constructor(pubsub: IPubSub, mode: BinaryPubSubMode) {
+    constructor(pubsub: IPubSubTransport, mode: BinaryPubSubMode) {
         this.pubsub = pubsub;
         this.incomingBinaries = {};
         this.mode = mode;
     }
 
-    async publish(message: any): Promise<void> {
+    async publish(message: any): Promise<any> {
         if (this.mode === BinaryPubSubMode.Buffer && !(message instanceof Buffer)) {
             throw new Error('Buffer instance is required for BinaryPubSub');
         }
@@ -53,13 +50,13 @@ export class BinaryPubSub implements IBinaryPubSub {
             chunkNumber = 0;
 
         while (offset <= compressedBase64.length) {
-            chunkSize = CHUNK_DATA_LIMIT;
+            chunkSize = this.pubsub.getChunkLimit();
 
             do {
-                // Substract 1KB each time chunk is greater then allowed 32KB
+                // Substract 1KB each time chunk is greater then allowed size
                 chunkSize -= 1000;
                 chunk.data = compressedBase64.slice(offset, offset + chunkSize);
-            } while (this.getChunkSize(chunk) >= CHUNK_LIMIT);
+            } while (this.pubsub.getChunkSize(chunk) >= this.pubsub.getChunkLimit());
 
             if (offset + chunkSize > compressedBase64.length) {
                 // This is the last chunk, add termination flag
@@ -76,7 +73,7 @@ export class BinaryPubSub implements IBinaryPubSub {
         }
     }
 
-    subscribe(callback: SubscribeCallback): void {
+    async subscribe(callback: SubscribeCallback): Promise<any> {
         this.pubsub.subscribe((message) => {
             if (!('id' in message)) {
                 // Unsupported message
@@ -137,11 +134,6 @@ export class BinaryPubSub implements IBinaryPubSub {
             n: 0
         };
         return emptyChunkMessage;
-    }
-
-    private getChunkSize(chunk: any): number {
-        // https://www.pubnub.com/community/discussion/21/calculating-a-pubnub-message-payload-size
-        return encodeURIComponent(this.channel + JSON.stringify(chunk)).length + 100;
     }
 
 }

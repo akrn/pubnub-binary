@@ -5,7 +5,10 @@
   "main": "index.js",
   "private": true,
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "echo-server": "node --harmony echo-server.js",
+    "client": "node --harmony client.js",
+    "binary-client": "node --harmony binary-client.js"
   },
   "repository": {
     "type": "git",
@@ -17,6 +20,8 @@
   },
   "homepage": "https://github.com/akrn/pubnub-binary#readme",
   "dependencies": {
-    "pubnub": "^3.7.18"
+    "pubnub": "^3.7.18",
+    "pusher": "^1.1.0",
+    "pusher-client": "^0.2.4"
   }
 }

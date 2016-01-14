@@ -17,14 +17,14 @@ export class MemoryPubSub implements IPubSub {
         this.channel = channel;
     }
 
-    async publish(message: any): Promise<void> {
+    async publish(message: any): Promise<any> {
         if (MemoryPubSub.channelsCallbacks[this.channel]) {
             this.log.info('PubSub publish', {message: message} );
             MemoryPubSub.channelsCallbacks[this.channel](message);
         }
     }
 
-    subscribe(callback: SubscribeCallback): void {
+    async subscribe(callback: SubscribeCallback): Promise<any> {
         if (MemoryPubSub.channelsCallbacks[this.channel]) {
             throw new Error('');
         }
@@ -34,4 +34,13 @@ export class MemoryPubSub implements IPubSub {
     unsubscribe() {
         delete MemoryPubSub.channelsCallbacks[this.channel];
     }
+
+    getChunkLimit(): number {
+        return 10 * 1024 * 1024;
+    }
+
+    getChunkSize(chunk: any): number {
+        return JSON.stringify(chunk).length;
+    }
+
 }
